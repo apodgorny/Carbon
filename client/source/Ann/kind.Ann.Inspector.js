@@ -8,9 +8,9 @@ enyo.kind({
 	classes		: 'enyo-fit repeater-sample',
 	components	: [
 		{name: 'repeater', kind: 'Repeater', onSetupItem:'setupItem', components: [
-			{name:'item', components: [
-				{name: 'key',	tag:'span'},
-				{name: 'value', tag:'span'}
+			{name:'item', classes: 'item', components: [
+				{name: 'key',	tag:'span', classes: 'key'	 },
+				{name: 'value', tag:'span', classes: 'value' }
 			]}
 		]}
 	],

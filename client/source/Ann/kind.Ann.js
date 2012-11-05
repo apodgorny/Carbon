@@ -15,7 +15,8 @@ enyo.kind({
 			kind 		: 'Signals',
 			onDragStart : 'onDragStart',
 			onDragStop	: 'onDragStop',
-			onDragOver	: 'onDragOver'
+			onDragOver	: 'onDragOver',
+			onDrag		: 'onDrag'
 		}
 	],
 	
@@ -26,6 +27,7 @@ enyo.kind({
 	draggedNode		: null,
 	
 	/******************************/
+	
 	create: function() {
 		var oThis = this;
 		this.inherited(arguments);
@@ -56,10 +58,15 @@ enyo.kind({
 		return this.draggedNode;
 	},
 	
+	isDragging: function() {
+		return this.draggedNode !== null;
+	},
+	
 	onDragOver: function(oSender, oEvent) {
-		if (!this.getConnection(oEvent.node.name, oEvent.draggedNode.name)) {
-			oEvent.draggedNode.reverseDrag();
-			this.connectNodes(oEvent.draggedNode, oEvent.node);
+		if (!this.getConnection(oEvent.node, this.draggedNode)) {
+			this.connectNodes(this.draggedNode, oEvent.node);
+			this.draggedNode.dragReverse();
+			this.draggedNode.dragStop();
 			this.update();
 		}
 	},
@@ -70,6 +77,10 @@ enyo.kind({
 	
 	onDragStop: function(oSender, oEvent) {
 		this.draggedNode = null;
+	},
+	
+	onDrag: function(oSender, oEvent) {
+		this.update();
 	},
 	
 	onEvent: function(oEvent) {
@@ -91,7 +102,7 @@ enyo.kind({
 				enyo.Signals.send('onMouseUp', {x: nX, y: nY});
 				break;
 			case 'mouseout':
-				enyo.Signals.send('onMouseOut', {x: nX, y: nY});
+				enyo.Signals.send('onViewportMouseOut', {x: nX, y: nY});
 				break;
 			case 'mousemove':
 				enyo.Signals.send('onMouseMove', {x: nX, y: nY});
@@ -101,14 +112,18 @@ enyo.kind({
 		}
 	},
 	
-	addNode: function(sName, nX, nY) {
-		this.createComponent({name: sName, kind: 'Ann.Node', x: nX, y: nY}, {owner: this});
+	addNode: function(sName, nX, nY, nR, nF) {
+		nR = nR || 30;
+		nF = nF || 1;
+		
+		this.createComponent({name: sName, kind: 'Ann.Node', x: nX, y: nY, r: nR, f: nF}, {owner: this});
 		this.nodes[sName] = this.$[sName];
 		this.nodeCount ++;
+		return this.nodes[sName];
 	},
 	
-	getNode: function(sId) {
-		return typeof this.nodes[sId] != 'undefined' ? this.nodes[sId] : null;
+	getNode: function(sName) {
+		return typeof this.nodes[sName] != 'undefined' ? this.nodes[sName] : null;
 	},
 	
 	getConnection: function(oNode1, oNode2) {
@@ -122,27 +137,67 @@ enyo.kind({
 			: oNode2.name + '_' + oNode1.name;
 	},
 	
-	connectNodes: function(oNode1, oNode2) {
+	connectNodes: function(oNode1, oNode2, nWeight) {
+		nWeight = nWeight || 1.0;
+		
 		var sName = this.getConnectionName(oNode1, oNode2);
 		this.createComponent({
 			name	: sName, 
 			kind 	: 'Ann.Connection', 
 			node1	: oNode1,
-			node2	: oNode2
+			node2	: oNode2,
+			weight	: nWeight
 		}, {owner: this});
 		this.connections[sName] = this.$[sName];
-	},
-	
-	start: function() {
-		this.addNode(2, 200, 200);
-		this.addNode(3, 300, 200);
-		this.connectNodes(1, 2);
-		this.connectNodes(2, 3);
-		this.connectNodes(1, 3);
+		this.connectionCount ++;
+		return this.connections[sName];
 	},
 	
 	update: function() {
 		enyo.Signals.send('onUpdate');
+	},
+	
+	fromObject: function(o) {
+		var n,
+			oData;
+		
+		for (n=0; n<o.nodes.length; n++) {
+			oData = o.nodes[n];
+			this.addNode(
+				oData.name,
+				oData.x,
+				oData.y,
+				oData.r,
+				oData.f
+			);
+		}
+		
+		for (n=0; n<o.connections.length; n++) {
+			oData  = o.connections[n];
+			this.connectNodes(
+				this.getNode(oData.node1),
+				this.getNode(oData.node2),
+				oData.weight
+			)
+		}
+		
+		this.update();
+	},
+	
+	toObject: function() {
+		var sName,
+			o = {
+			nodes: [],
+			connections: []
+		};
+		
+		for (sName in this.nodes) {
+			o.nodes.push(this.nodes[sName].toObject());
+		}
+		for (sName in this.connections) {
+			o.connections.push(this.connections[sName].toObject());
+		}
+		return o;		
 	},
 	
 	/******************************/

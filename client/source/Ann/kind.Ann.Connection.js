@@ -13,6 +13,7 @@ enyo.kind({
 	},
 	
 	rectSize: 40,
+	isDraggable: false,
 	
 	/******************************/
 	
@@ -37,16 +38,16 @@ enyo.kind({
 			w: this.rectSize,
 			h: this.rectSize
 		};
-		
-		this.getLine().setBounds(oLineBounds);
-		this.getRect().setBounds(oRectBounds);
-		
-		this.getText().setBounds({
+		var oTextBounds = {
 			l: oRectBounds.l + nHalfRect / 2,
 			t: oRectBounds.t + nHalfRect,
 			w: oRectBounds.w,
 			h: oRectBounds.h
-		});
+		};
+		
+		this.getLine().setBounds(oLineBounds);
+		this.getRect().setBounds(oRectBounds);
+		this.getText().setBounds(oTextBounds);
 		
 		var nDist = Math.max(Math.abs(this.node2.x - this.node1.x), Math.abs(this.node2.y - this.node1.y));
 		if (nDist <= this.node1.r + this.node2.r + this.rectSize) {
@@ -77,6 +78,56 @@ enyo.kind({
 		], {owner: this});
 		
 		this.update();
+	},
+	
+	hasPoint: function(nX, nY) {
+		// LINE COLLISION
+		
+		var nX1 = this.node1.x,
+			nX2 = this.node2.x,
+			nY1 = this.node1.y,
+			nY2 = this.node2.y,
+			nMinX = Math.min(nX1, nX2),
+			nMaxX = Math.max(nX1, nX2),
+			nMinY = Math.min(nY1, nY2),
+			nMaxY = Math.max(nY1, nY2),
+			nK,
+			nB,
+			nCollisionY; 
+		
+		if (nX < nMinX  || nX > nMaxX  || nY < nMinY  || nY > nMaxY ) {
+			return false; 
+		}
+		
+		if (this.node1.hasPoint(nX, nY) || this.node2.hasPoint(nX, nY)) {
+			return false;
+		}
+		
+		nK 			= (nY1 - nY2)/(nX1 - nX2);
+		nB 			= nY1 - nK * nX1;
+		nCollisionY = nK * nX + nB;
+		
+		if (Math.abs(nY - nCollisionY) < 2) {
+			return true;
+		}
+		
+		// RECT COLLISION
+		
+		var oR = this.getRect().getBounds();
+		if ((nX > oR.l && nX < oR.l + oR.w) && (nY > oR.t && nY < oR.t + oR.h)) {
+			return true;
+		}
+		
+		return false;
+	},
+	
+	toObject: function() {
+		return {
+			name 	: this.name,
+			weight	: this.weight,
+			node1	: this.node1.name,
+			node2	: this.node2.name
+		};
 	}
 	
 	/******************************/

@@ -9,7 +9,8 @@ enyo.kind({
 	published: {
 		x	: '',
 		y	: '',
-		r	: 30
+		r	: 30,
+		f 	: 1
 	},
 	
 	textOffset: 5,
@@ -35,10 +36,6 @@ enyo.kind({
 		this.x = nX;
 		this.y = nY;
 		this.update();
-	},
-	
-	onTap: function() {
-		console.log('click');
 	},
 	
 	hasPoint: function(nX, nY) {
@@ -69,6 +66,16 @@ enyo.kind({
 			}
 			return 0;
 		});
+	},
+	
+	toObject: function() {
+		return {
+			name : this.name,
+			x	 : this.x,
+			y	 : this.y,
+			r	 : this.r,
+			f 	 : this.f
+		};
 	}
 	
 	/******************************/

@@ -12,47 +12,58 @@ enyo.kind({
 			onMouseDown		: 'onMouseDown',
 			onMouseUp		: 'onMouseUp',
 			onMouseMove		: 'onMouseMove',
-			onUpdate		: 'onUpdate'
+			onUpdate		: 'onUpdate',
+			onDragStart		: 'onDragStart',
+			onFocus			: 'onFocus'
 		}
 	],
-	published: {
-	},
 	
 	isDragged	: false,
 	isDraggable	: true,
 	isHovered	: false,
+	isFocused	: false,
 	dragStartX	: 100,
 	dragStartY	: 100,
 	
 	/******************************/
-	create: function() {
-		this.inherited(arguments);
-	},
+
+	focus		: function() {},
+	blur		: function() {},
+	update		: function() {},
+	hasPoint	: function(nX, nY) {},
+	toObject	: function() {},
 	
-	hasPoint: function(nX, nY) {},
-	
-	reverseDrag: function() {
+	// Also called from Ann object
+	dragReverse: function() {
 		this.moveTo(this.dragStartX, this.dragStartY);
 	},
 	
+	// Also called from Ann object
 	dragStop: function() {
-		enyo.Signals.send('onDragStop', {node: this});
 		this.isDragged = false;
+		this.dragStartX = 100;
+		this.dragStartY = 100;
+		enyo.Signals.send('onDragStop', {node: this});
+	},
+	
+	dragStart: function(nX, nY) {
+		this.isDragged 	= true;
+		this.dragStartX = nX;
+		this.dragStartY = nY;
+		enyo.Signals.send('onDragStart', {node: this});
 	},
 	
 	onMouseDown: function(oSender, oEvent) {
 		if (this.isHovered) {
-			enyo.Signals.send('onFocus', {node: this});
 			this.focus();
+			enyo.Signals.send('onFocus', {node: this});
+			
 			if (this.isDraggable) {
-				enyo.Signals.send('onDragStart', {node: this});
-				this.isDragged 	= true;
-				this.dragStartX = oEvent.x;
-				this.dragStartY = oEvent.y;
+				this.dragStart(oEvent.x, oEvent.y);
 			}
 		} else {
-			enyo.Signals.send('onBlur', {node: this});
 			this.blur();
+			enyo.Signals.send('onBlur', {node: this});
 		}
 	},
 	
@@ -70,18 +81,40 @@ enyo.kind({
 			enyo.Signals.send('onDrag', {node: this, x: nX, y: nY});
 			this.moveTo(nX, nY);
 		} else if (this.hasPoint(nX, nY)) {
-			this.isHovered = true;
-			enyo.Signals.send('onMouseOver', {node: this, x: nX, y: nY});
+			if (!this.isHovered) {
+				enyo.Signals.send('onMouseOver', {node: this, x: nX, y: nY});
+				this.isHovered = true;
+			}
 			
-			var oDraggedNode = this.owner.getDraggedNode();
-			if (oDraggedNode && oDraggedNode !== this) {
-				console.log('dragover!!!');
-				enyo.Signals.send('onDragOver', {node: this, draggedNode: oDraggedNode});
-				this.dragStop();
+			if (this.owner.isDragging() && this.isDraggable) {
+				enyo.Signals.send('onDragOver', {node: this});
 			}
 		} else {
-			this.isHovered = false;
-			enyo.Signals.send('onMouseOut', {node: this, x: nX, y: nY});
+			if (this.isHovered) {
+				this.isHovered = false;
+				enyo.Signals.send('onMouseOut', {node: this, x: nX, y: nY});
+			}
+		}
+	},
+	
+	onDragStart: function(oSender, oEvent) {
+		if (oEvent.node !== this && this.isDragged) {
+			this.dragStop();
+		}
+	},
+	
+	onFocus: function(oSender, oEvent) {
+		if (oEvent.node !== this) {
+			this.blur();
+			this.isFocused = false;
+		} else {
+			this.isFocused = true;
+		}
+	},
+	
+	onBlur: function(oSender, oEvent) {
+		if (oEvent.node == this) {
+			this.isFocused = false;
 		}
 	},
 	

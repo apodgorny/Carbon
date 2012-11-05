@@ -2,14 +2,36 @@
 	Put anything you reference with "url()" in ../assets/
 	This way, you can minify your application, and just remove the "source" folder for production
 */
-#app {
+.ann {
 	margin: 0;
 	background-color: silver;
 	padding: 16px;
 }
-	.ann_inspector {
+	.ann .inspector {
 		margin: 0 0 0 800px;
 		border: 2px solid black;
 		width: 300px;
 		height: 600px;
 	}
+		.ann .inspector .item {
+			border: 1px solid #CCC;
+			height: 20px;
+			padding: 1px 5px;
+		}
+			.ann .inspector .item .key {
+				display: block;
+				float: left;
+				text-align: left;
+				width: 50%;
+				height: 20px;
+				padding: 0;
+			}
+			.ann .inspector .item .value {
+				display: block;
+				float: left;
+				text-align: left;
+				font-weight: bold;
+				width: 50%;
+				height: 20px;
+				padding: 0;
+			}

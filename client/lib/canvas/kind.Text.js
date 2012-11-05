@@ -17,7 +17,11 @@ enyo.kind({
 		this.draw(ctx);
 	},
 	fill: function(ctx) {
-		ctx.fillText(this.text, this.bounds.l, this.bounds.t);
+		try {
+			ctx.fillText(this.text, this.bounds.l, this.bounds.t);
+		} catch(e) {
+			console.log(e, this.text, this.bounds);
+		}
 	},
 	outline: function(ctx) {
 		ctx.strokeText(this.text, this.bounds.l, this.bounds.t);
